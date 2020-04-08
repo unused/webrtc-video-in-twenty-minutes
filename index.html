@@ -5,6 +5,7 @@
     <title>webrtc video in 20 minutes</title>
     <style>
       html, body { margin: 0; padding: 0; }
+      p { color: rgba(0, 0, 0, .78); }
       .row { display: flex; flex-flow: row nowrap; }
     </style>
   </head>
@@ -52,6 +53,8 @@
       sdpTextField.value = JSON.stringify(peerConnection.localDescription);
     };
 
+    // Offer creates an publishes a session description offer which is the very
+    // first messages exchanged between the clients.
     const offer = mediaStream => {
       console.debug('create offer');
 
@@ -60,6 +63,9 @@
         .then(() => sdpTextField.value = JSON.stringify(peerConnection.localDescription))
         .catch(err => console.error(err));
     }
+
+    // Answer provides a session description answer, very similar to the offer
+    // however it updates the peer connection with the remote message first.
     const answer = mediaStream => {
       console.debug('create answer');
       const sdp = JSON.parse(sdpTextField.value);
@@ -71,6 +77,8 @@
         .catch(err => console.error(err));
     }
 
+    // Handle the local stream, attach it to the video element to see a preview
+    // of yourself, as well as attach it to our peer connection.
     const attachStream = (mediaStream) => {
       console.debug('attachStream', mediaStream);
       localVideo.onloadedmetadata = () => localVideo.play();
@@ -88,6 +96,7 @@
       });
     };
 
+    // Access the local camera and microphone, and start a media stream.
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then(stream => attachStream(stream))
