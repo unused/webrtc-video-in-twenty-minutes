@@ -14,7 +14,7 @@
       <video id="local" autoplay></video>
       <video id="remote" autoplay></video>
 
-      <div style="min-width: 20vw; max-width: 50ch" id="sdp-area">
+      <div style="min-width: 20vw; max-width: 50ch">
         <p>Copy and paste the stuff that appears inside the textarea between
         the hosts until some connection is established!</p>
         <textarea style="min-height:18rem; min-width: 50ch"></textarea>
@@ -39,11 +39,11 @@
 
     // On Track receives an event containing our media stream. We attach it to
     // the remove video element and play it. Additionally we remove the connect
-    // button and textarea that is no longer needed.
+    // button that is no longer needed.
     peerConnection.ontrack = event => {
       remoteVideo.onloadedmetadata = () => localVideo.play();
       remoteVideo.srcObject = event.streams[0];
-      document.getElementById("sdp-area").remove();
+      connectButton.remove();
     };
 
     // Update SDP takes the current local session description from our peer
