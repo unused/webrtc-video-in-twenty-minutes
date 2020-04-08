@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>webrtc video in 20 minutes</title>
+    <style>
+      html, body { margin: 0; padding: 0; }
+      .row { display: flex; flex-flow: row nowrap; }
+    </style>
+  </head>
+  <body>
+    <h1>WebRTC Video Sample</h1>
+    <div class="row">
+      <video id="local" autoplay></video>
+      <video id="remote" autoplay></video>
+
+      <div style="min-width: 20vw; max-width: 50ch" id="sdp-area">
+        <p>Copy and paste the stuff that appears inside the textarea between
+        the hosts until some connection is established!</p>
+        <textarea style="min-height:18rem; min-width: 50ch"></textarea>
+        <button>connect</button>
+      </div>
+    </div>
+  <script>
+    const remoteVideo = document.getElementById("remote");
+    const localVideo = document.getElementById("local");
+    const sdpTextField = document.querySelector("textarea");
+    const connectButton = document.querySelector("button");
+
+    // Information about ICE servers - Use your own!
+    const peerConnection = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.stunprotocol.org" }]
+    });
+
+    // peerConnection.onXXX - there is usually a bunch of listeners required to
+    //                        keep track of issues, state change, etc. The only
+    //                        event we want to handle however is the receiving
+    //                        of a track.
+
+    // On Track receives an event containing our media stream. We attach it to
+    // the remove video element and play it. Additionally we remove the connect
+    // button and textarea that is no longer needed.
+    peerConnection.ontrack = event => {
+      remoteVideo.onloadedmetadata = () => localVideo.play();
+      remoteVideo.srcObject = event.streams[0];
+      document.getElementById("sdp-area").remove();
+    };
+
+    // Update SDP takes the current local session description from our peer
+    // connection and writes it into the textarea field.
+    const updateSdp = () => {
+      sdpTextField.value = JSON.stringify(peerConnection.localDescription);
+    };
+
+    const offer = mediaStream => {
+      console.debug('create offer');
+
+      peerConnection.createOffer()
+        .then(offer => peerConnection.setLocalDescription(offer))
+        .then(() => sdpTextField.value = JSON.stringify(peerConnection.localDescription))
+        .catch(err => console.error(err));
+    }
+    const answer = mediaStream => {
+      console.debug('create answer');
+      const sdp = JSON.parse(sdpTextField.value);
+
+      peerConnection.setRemoteDescription(new RTCSessionDescription(sdp))
+        .then(() => peerConnection.createAnswer())
+        .then(answer => peerConnection.setLocalDescription(answer))
+        .then(() => sdpTextField.value = JSON.stringify(peerConnection.localDescription))
+        .catch(err => console.error(err));
+    }
+
+    const attachStream = (mediaStream) => {
+      console.debug('attachStream', mediaStream);
+      localVideo.onloadedmetadata = () => localVideo.play();
+      localVideo.srcObject = mediaStream;
+
+      mediaStream.getTracks()
+        .forEach(track => peerConnection.addTrack(track, mediaStream));
+
+      connectButton.addEventListener('click', () => {
+        if (sdpTextField.value === "") {
+          offer(mediaStream);
+        } else {
+          answer(mediaStream);
+        }
+      });
+    };
+
+    navigator.mediaDevices
+      .getUserMedia({ video: true, audio: true })
+      .then(stream => attachStream(stream))
+      .catch(err => console.error(err));
+  </script>
