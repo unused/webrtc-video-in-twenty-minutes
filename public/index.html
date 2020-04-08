@@ -44,7 +44,6 @@
     peerConnection.ontrack = event => {
       remoteVideo.onloadedmetadata = () => localVideo.play();
       remoteVideo.srcObject = event.streams[0];
-      connectButton.remove();
     };
 
     // Update SDP takes the current local session description from our peer
