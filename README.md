@@ -2,11 +2,11 @@
 # WebRTC Video in Twenty Minutes
 
 A super short presentation on how to setup a basic [WebRTC] application to
-communicate with video. Note that I use a public stun server for sake of
+communicate with video. Note that I use a public STUN server for sake of
 simplicity. When building your own WebRTC application you have to setup
-your own infrastructure which requires a stun server, a turn server for
-business connections, and some kind of server-side signaling (e.g. websockets,
-sip, polling, etc.). Everything used in this example is based on web standards,
+your own infrastructure which requires a STUN server, a TURN server for
+business connections, and some kind of server-side signaling (e.g. Websockets,
+SIP, polling, etc.). Everything used in this example is based on web standards,
 no additional dependencies are required.
 
 ## Usage
