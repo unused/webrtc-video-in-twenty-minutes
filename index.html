@@ -12,8 +12,8 @@
   <body>
     <h1>A simplified WebRTC Video Sample</h1>
     <div class="row">
-      <video autoplay></video>
-      <video autoplay></video>
+      <video id="local" autoplay></video>
+      <video id="remote" autoplay></video>
 
       <div style="min-width: 20vw; max-width: 50ch">
         <p>Copy and paste the stuff that appears inside the textarea between
@@ -42,6 +42,8 @@
       // the remove video element and play it. Additionally we remove the connect
       // button that is no longer needed.
       peerConnection.ontrack = event => {
+        console.debug("ontrack", event);
+
         remoteVideo.onloadedmetadata = () => remoteVideo.play();
         remoteVideo.srcObject = event.streams[0];
       };
@@ -49,14 +51,14 @@
       // Update SDP takes the current local session description from our peer
       // connection and writes it into the textarea field.
       const updateSdp = sdp => {
-        peerConnection.setLocalDescription(sdp)
-        sdpTextField.value = JSON.stringify(sdp);
+        return peerConnection.setLocalDescription(sdp)
+          .then(() => (sdpTextField.value = JSON.stringify(peerConnection.localDescription)));
       };
 
       // Offer creates an publishes a session description offer which is the very
       // first messages exchanged between the clients.
       const offer = () => {
-        console.debug('create offer');
+        console.debug("create offer");
 
         peerConnection.createOffer()
           .then(updateSdp)
@@ -66,13 +68,20 @@
       // Answer provides a session description answer, very similar to the offer
       // however it updates the peer connection with the remote message first.
       const answer = () => {
-        console.debug('create answer');
+        console.debug("create answer");
 
         const sdp = JSON.parse(sdpTextField.value);
 
         peerConnection.setRemoteDescription(new RTCSessionDescription(sdp))
-          .then(() => peerConnection.createAnswer())
-          .then(updateSdp)
+          .then(() => {
+            console.debug(peerConnection.connectionState);
+
+            if (peerConnection.connectionState === "connecting"
+              || peerConnection.connectionState === "connected") {
+              return;
+            }
+            return peerConnection.createAnswer().then(updateSdp);
+          })
           .catch(err => console.error("answer", err));
       }
 
@@ -88,7 +97,11 @@
           .forEach(track => peerConnection.addTrack(track, mediaStream));
 
         connectButton.addEventListener("click", () => {
-          sdpTextField.value === "" ? offer() : answer()
+          if (sdpTextField.value === "") {
+            offer();
+          } else {
+            answer();
+          }
         });
       };
 
